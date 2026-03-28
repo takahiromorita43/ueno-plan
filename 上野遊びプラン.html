@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>上野おでかけ日程表</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    max-width: 794px;
+    width: 100%;
+    background: #faf9f6;
+    font-family: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+    color: #333;
+    padding: 40px 44px 44px;
+  }
+
+  /* ===== ヘッダー ===== */
+  .header {
+    background: linear-gradient(135deg, #4a8c79 0%, #6aaa96 100%);
+    border-radius: 14px;
+    padding: 22px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    color: white;
+  }
+  .header-title { font-size: 22px; font-weight: 700; letter-spacing: 2px; }
+  .header-sub   { font-size: 12px; opacity: 0.8; margin-top: 5px; letter-spacing: 1px; }
+  .header-date  { text-align: right; flex-shrink: 0; margin-left: 16px; }
+  .header-date .d { font-size: 34px; font-weight: 700; line-height: 1; }
+  .header-date .y { font-size: 12px; opacity: 0.8; margin-top: 4px; }
+
+  /* ===== タイムライン ===== */
+  .timeline { position: relative; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 9px; top: 10px; bottom: 10px;
+    width: 2px;
+    background: linear-gradient(to bottom, #6aaa96, #c8967a, #c8a050);
+  }
+
+  .item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  /* ドット */
+  .dot {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px currentColor;
+    flex-shrink: 0;
+    margin-top: 16px;
+    position: relative; z-index: 1;
+  }
+
+  /* 時刻 */
+  .time-wrap {
+    width: 58px;
+    flex-shrink: 0;
+    text-align: right;
+    padding-right: 10px;
+    padding-top: 12px;
+  }
+  .time {
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  /* カード本体 */
+  .card {
+    flex: 1;
+    min-width: 0;
+    background: white;
+    border-radius: 12px;
+    margin-left: 12px;
+    border-left: 4px solid;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-inner {
+    display: flex;
+    flex: 1;
+  }
+
+  .card-content {
+    flex: 1;
+    min-width: 0;
+    padding: 14px 16px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 6px;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 3px;
+  }
+
+  .card-sub {
+    font-size: 10.5px;
+    color: #999;
+    margin-bottom: 8px;
+  }
+
+  .card-body {
+    font-size: 11px;
+    color: #666;
+    line-height: 1.75;
+  }
+
+  /* マップ */
+  .map-wrap {
+    width: 200px;
+    flex-shrink: 0;
+    background: #e8e8e8;
+    position: relative;
+    overflow: hidden;
+  }
+  .map-wrap iframe {
+    width: 100%; height: 100%;
+    border: none;
+    display: block;
+  }
+  .map-label {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.45);
+    color: white;
+    font-size: 9.5px;
+    padding: 3px 8px;
+    text-align: center;
+  }
+
+  /* 出発カード（小） */
+  .dep-card {
+    background: #f2f2f0;
+    border-left: 4px solid #bbb;
+    border-radius: 12px;
+    margin-left: 12px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .dep-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+    background: #bbb;
+  }
+  .dep-title { font-size: 14px; font-weight: 700; color: #888; }
+
+  /* カラー */
+  .c-teal   { color: #4a8c79; }
+  .c-green  { color: #6a9c62; }
+  .c-pink   { color: #c8786a; }
+  .c-gold   { color: #b8904a; }
+  .c-gray   { color: #aaa; }
+
+  .b-teal   { background: #4a8c79; }
+  .b-green  { background: #6a9c62; }
+  .b-pink   { background: #c8786a; }
+  .b-gold   { background: #b8904a; }
+
+  .border-teal  { border-left-color: #4a8c79; }
+  .border-green { border-left-color: #6a9c62; }
+  .border-pink  { border-left-color: #c8786a; }
+  .border-gold  { border-left-color: #b8904a; }
+
+  .dot-teal  { color: #4a8c79; background: #4a8c79; }
+  .dot-green { color: #6a9c62; background: #6a9c62; }
+  .dot-pink  { color: #c8786a; background: #c8786a; }
+  .dot-gold  { color: #b8904a; background: #b8904a; }
+  .dot-gray  { color: #bbb;    background: #bbb; }
+
+  /* リンクチップ */
+  .card-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 7px;
+    padding-top: 7px;
+    border-top: 1px solid #f0ede8;
+  }
+  .link-chip {
+    display: inline-flex;
+    align-items: center;
+    font-size: 9px;
+    color: #888;
+    padding: 2px 8px;
+    border-radius: 10px;
+    text-decoration: none;
+    background: #f5f3f0;
+    border: 1px solid #e8e5e0;
+    line-height: 1.6;
+    white-space: nowrap;
+    word-break: keep-all;
+  }
+  .link-chip::before { content: '↗ '; }
+  .link-chip:hover { background: #eae8e3; color: #555; }
+
+  /* フッター */
+  .footer {
+    text-align: center;
+    margin-top: 22px;
+    font-size: 10px;
+    color: #c0bab2;
+    letter-spacing: 2px;
+  }
+
+  /* ===== スマホ対応 ===== */
+  @media (max-width: 600px) {
+    body {
+      padding: 16px 12px 24px;
+    }
+
+    .header {
+      padding: 16px 18px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    .header-title { font-size: 16px; letter-spacing: 1px; }
+    .header-sub   { font-size: 10px; }
+    .header-date .d { font-size: 24px; }
+    .header-date .y { font-size: 10px; }
+
+    .timeline::before {
+      left: 7px;
+    }
+
+    .time-wrap {
+      width: 44px;
+      padding-right: 6px;
+    }
+    .time { font-size: 9.5px; }
+
+    .dot {
+      width: 16px; height: 16px;
+      margin-top: 14px;
+    }
+
+    .card {
+      margin-left: 8px;
+    }
+
+    /* スマホではマップを非表示 */
+    .map-wrap {
+      display: none;
+    }
+
+    .card-content {
+      padding: 10px 12px;
+    }
+
+    .card-title { font-size: 13px; }
+    .card-sub   { font-size: 10px; }
+    .card-body  { font-size: 10.5px; }
+
+    .link-chip  { font-size: 9px; }
+
+    .dep-card {
+      margin-left: 8px;
+      padding: 8px 12px;
+    }
+    .dep-title { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+  <div>
+    <div class="header-title">上野 おでかけ日程表</div>
+    <div class="header-sub">上野駅集合 &nbsp;›&nbsp; 動物園 &nbsp;›&nbsp; 公園 &nbsp;›&nbsp; ランチ &nbsp;›&nbsp; アメ横</div>
+  </div>
+  <div class="header-date">
+    <div class="d">4月12日</div>
+    <div class="y">2026年（日曜日）</div>
+  </div>
+</div>
+
+<!-- タイムライン -->
+<div class="timeline">
+
+  <!-- 1. 集合 -->
+  <div class="item">
+    <div class="time-wrap">
+      <div class="time c-teal">9:00</div>
+    </div>
+    <div class="dot dot-teal"></div>
+    <div class="card border-teal" style="min-height:90px;">
+      <div class="card-inner">
+        <div class="card-content">
+          <span class="badge b-teal">集合</span>
+          <div class="card-title">上野駅 集合</div>
+          <div class="card-sub">JR公園口 改札前</div>
+          <div class="card-body">動物園に近い公園口での集合がスムーズ。入場チケットは事前のオンライン購入がおすすめ。</div>
+          <div class="card-links">
+            <a href="https://www.jreast.co.jp/estation/stations/1130.html" target="_blank" class="link-chip">JR上野駅 時刻表</a>
+          </div>
+        </div>
+        <div class="map-wrap">
+          <iframe src="https://maps.google.com/maps?q=上野駅公園口&t=&z=16&ie=UTF8&iwloc=&output=embed" loading="lazy"></iframe>
+          <div class="map-label">上野駅 公園口</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 動物園 -->
+  <div class="item">
+    <div class="time-wrap">
+      <div class="time c-teal">9:30<br>〜<br>12:00</div>
+    </div>
+    <div class="dot dot-teal"></div>
+    <div class="card border-teal" style="min-height:130px;">
+      <div class="card-inner">
+        <div class="card-content">
+          <span class="badge b-teal">動物園</span>
+          <div class="card-title">上野動物園</div>
+          <div class="card-sub">開園 9:30〜 ／ 所要 約2時間半</div>
+          <div class="card-body">東園・西園に分かれ約3,000頭以上の動物を展示。SNSで話題の「動かない鳥」ハシビロコウ、世界三大珍獣のコビトカバ・オカピは特に人気。広いので見どころを絞って回るのがコツ。</div>
+          <div class="card-links">
+            <a href="https://www.tokyo-zoo.net/zoo/ueno/" target="_blank" class="link-chip">公式サイト</a>
+            <a href="https://ueno-zoo.smartmap-pro.com/maps/574bp3oN/parcels/1?c=0" target="_blank" class="link-chip">園内マップ</a>
+            <a href="https://www.asoview.com/channel/ticket/5ciQtROJoA/ticket0000028208/" target="_blank" class="link-chip">チケット購入</a>
+          </div>
+        </div>
+        <div class="map-wrap">
+          <iframe src="https://maps.google.com/maps?q=上野動物園&t=&z=16&ie=UTF8&iwloc=&output=embed" loading="lazy"></iframe>
+          <div class="map-label">上野動物園</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 公園 -->
+  <div class="item">
+    <div class="time-wrap">
+      <div class="time c-green">12:00<br>〜<br>13:15</div>
+    </div>
+    <div class="dot dot-green"></div>
+    <div class="card border-green" style="min-height:130px;">
+      <div class="card-inner">
+        <div class="card-content">
+          <span class="badge b-green">公園</span>
+          <div class="card-title">上野公園散歩 / 不忍池</div>
+          <div class="card-sub">無料 ／ 腹ごなし散歩</div>
+          <div class="card-body">動物園を出たらそのまま公園内を南下して散歩。不忍池は上野公園の中にある大きな池で、池沿いの遊歩道が心地よい。4月中旬は新緑が美しい時期。</div>
+          <div class="card-links">
+            <a href="https://www.kensetsu.metro.tokyo.lg.jp/jimusho/toubuk/ueno/index_top.html" target="_blank" class="link-chip">上野恩賜公園 公式</a>
+            <a href="https://www.tokyo-park.or.jp/park/ueno/index.html" target="_blank" class="link-chip">公園施設案内</a>
+            <a href="https://t-navi.city.taito.lg.jp/spot/1035" target="_blank" class="link-chip">不忍池 観光情報</a>
+          </div>
+        </div>
+        <div class="map-wrap">
+          <iframe src="https://maps.google.com/maps?q=不忍池&t=&z=16&ie=UTF8&iwloc=&output=embed" loading="lazy"></iframe>
+          <div class="map-label">不忍池</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. ランチ -->
+  <div class="item">
+    <div class="time-wrap">
+      <div class="time c-pink">13:30<br>〜<br>14:30</div>
+    </div>
+    <div class="dot dot-pink"></div>
+    <div class="card border-pink" style="min-height:130px;">
+      <div class="card-inner">
+        <div class="card-content">
+          <span class="badge b-pink">ランチ</span>
+          <div class="card-title">ランチ ｜ La Cocolico</div>
+          <div class="card-sub">上野駅浅草口 徒歩2分 ／ 予約済</div>
+          <div class="card-body">カジュアルフレンチ＆イタリアン。名物のロティサリーチキンはしっとりジューシーと評判。キッシュや前菜プレートも人気。</div>
+          <div class="card-links">
+            <a href="http://www.la-cocorico.jp/ueno" target="_blank" class="link-chip">公式サイト</a>
+            <a href="https://tabelog.com/tokyo/A1311/A131101/13123339/" target="_blank" class="link-chip">食べログ</a>
+          </div>
+        </div>
+        <div class="map-wrap">
+          <iframe src="https://maps.google.com/maps?q=La+Cocolico+上野&t=&z=16&ie=UTF8&iwloc=&output=embed" loading="lazy"></iframe>
+          <div class="map-label">La Cocolico 上野</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. アメ横 -->
+  <div class="item">
+    <div class="time-wrap">
+      <div class="time c-gold">14:30<br>〜<br>15:15</div>
+    </div>
+    <div class="dot dot-gold"></div>
+    <div class="card border-gold" style="min-height:130px;">
+      <div class="card-inner">
+        <div class="card-content">
+          <span class="badge b-gold">散策</span>
+          <div class="card-title">アメ横ひやかし ／ 上野駅へ</div>
+          <div class="card-sub">上野〜御徒町間の商店街</div>
+          <div class="card-body">ランチ後に食べ歩き＆ショッピング。黒毛和牛コロッケ・カットフルーツなどが人気。</div>
+          <div class="card-links">
+            <a href="https://www.ameyoko.net/" target="_blank" class="link-chip">アメ横公式</a>
+            <a href="https://ameyokomap.com/" target="_blank" class="link-chip">マップ</a>
+          </div>
+        </div>
+        <div class="map-wrap">
+          <iframe src="https://maps.google.com/maps?q=アメヤ横丁&t=&z=16&ie=UTF8&iwloc=&output=embed" loading="lazy"></iframe>
+          <div class="map-label">アメ横商店街</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. 出発 -->
+  <div class="item">
+    <div class="time-wrap">
+      <div class="time c-gray">15:30</div>
+    </div>
+    <div class="dot dot-gray"></div>
+    <div class="dep-card" style="flex:1;">
+      <span class="dep-badge">出発</span>
+      <span class="dep-title">上野駅 出発</span>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">✦ &nbsp; 上野おでかけプラン &nbsp; 2026.4.12 &nbsp; ✦</div>
+
+</body>
+</html>
